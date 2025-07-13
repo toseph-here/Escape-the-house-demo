@@ -1,0 +1,60 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #fdf5e6; /* light cream background */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  color: #222;
+}
+
+h1 {
+  font-size: 28px;
+  margin: 15px 0 5px 0;
+  color: #444;
+}
+
+#score {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+canvas {
+  background-color: #e0e0e0;
+  border: 3px solid #999;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  touch-action: none;
+}
+
+#openDoorBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(145deg, #ffa500, #ffcc70);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  display: none;
+  transition: 0.2s;
+}
+
+#openDoorBtn:active {
+  transform: scale(0.95);
+  background: #ff9900;
+}
+
+@media (max-width: 600px) {
+  canvas {
+    width: 100vw;
+    height: 100vw;
+  }
+
+  #openDoorBtn {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}
