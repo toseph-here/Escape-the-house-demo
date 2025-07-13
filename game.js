@@ -1,93 +1,141 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const gridSize = 10;
-const cellSize = 40;
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 300;
+canvas.height = 300;
 
-let maze = [];
-let player = { x: 0, y: 9 };
-let exit = { x: 9, y: 0 };
+let player = { x: 10, y: 10, r: 10, color: "red", score: 0 };
+let exit = { x: 270, y: 270, size: 20 };
+let doors = [];
+let walls = [];
+let countdown = document.getElementById("countdown");
+let doorButton = document.getElementById("doorButton");
+let scoreDisplay = document.getElementById("scoreboard");
 
-// Create maze
+let keys = {};
+let lastDoorOpen = 0;
+let mazeChangeInterval = 10000; // 10 sec
+
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+// Random maze generator
 function generateMaze() {
-  maze = [];
-  for (let y = 0; y < gridSize; y++) {
-    let row = [];
-    for (let x = 0; x < gridSize; x++) {
-      row.push(Math.random() < 0.2 ? 1 : 0); // 1 = wall
-    }
-    maze.push(row);
-  }
-  maze[player.y][player.x] = 0;
-  maze[exit.y][exit.x] = 0;
-}
-generateMaze();
-setInterval(generateMaze, 10000); // Maze changes every 10 sec
+  walls = [];
+  doors = [];
 
-// Draw
+  for (let i = 0; i < 20; i++) {
+    let wall = {
+      x: Math.floor(Math.random() * 280),
+      y: Math.floor(Math.random() * 280),
+      w: 40,
+      h: 10
+    };
+    walls.push(wall);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    doors.push({
+      x: Math.floor(Math.random() * 260),
+      y: Math.floor(Math.random() * 260),
+      w: 20,
+      h: 10,
+      open: false
+    });
+  }
+}
+
+function drawMaze() {
+  ctx.fillStyle = "#333";
+  for (let wall of walls) ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+
+  for (let door of doors) {
+    ctx.fillStyle = door.open ? "lime" : "orange";
+    ctx.fillRect(door.x, door.y, door.w, door.h);
+  }
+
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(exit.x, exit.y, exit.size, exit.size);
+}
+
+function drawPlayer() {
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+  ctx.fillStyle = player.color;
+  ctx.fill();
+  ctx.closePath();
+}
+
+function movePlayer() {
+  let dx = 0, dy = 0;
+  if (keys["ArrowUp"]) dy = -2;
+  if (keys["ArrowDown"]) dy = 2;
+  if (keys["ArrowLeft"]) dx = -2;
+  if (keys["ArrowRight"]) dx = 2;
+
+  let newX = player.x + dx;
+  let newY = player.y + dy;
+
+  if (!checkCollision(newX, newY)) {
+    player.x = newX;
+    player.y = newY;
+  }
+
+  for (let door of doors) {
+    if (isTouching(player, door)) {
+      doorButton.style.display = "block";
+      doorButton.onclick = () => {
+        door.open = true;
+        doorButton.style.display = "none";
+      };
+      return;
+    }
+  }
+
+  doorButton.style.display = "none";
+}
+
+function checkCollision(x, y) {
+  for (let wall of walls) {
+    if (x > wall.x && x < wall.x + wall.w &&
+        y > wall.y && y < wall.y + wall.h) return true;
+  }
+  return false;
+}
+
+function isTouching(c, rect) {
+  return (c.x > rect.x && c.x < rect.x + rect.w &&
+          c.y > rect.y && c.y < rect.y + rect.h);
+}
+
+function checkExit() {
+  if (isTouching(player, exit)) {
+    player.score += 1;
+    scoreDisplay.textContent = `Score: ${player.score}`;
+    player.x = 10 + Math.random() * 20;
+    player.y = 10 + Math.random() * 20;
+  }
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let y = 0; y < gridSize; y++) {
-    for (let x = 0; x < gridSize; x++) {
-      ctx.fillStyle = maze[y][x] ? '#555' : '#222';
-      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-    }
-  }
-
-  // Exit
-  ctx.fillStyle = 'gold';
-  ctx.fillRect(exit.x * cellSize + 10, exit.y * cellSize + 10, 20, 20);
-
-  // Player
-  ctx.fillStyle = 'cyan';
-  ctx.beginPath();
-  ctx.arc(player.x * cellSize + 20, player.y * cellSize + 20, 15, 0, Math.PI * 2);
-  ctx.fill();
+  drawMaze();
+  drawPlayer();
+  movePlayer();
+  checkExit();
+  requestAnimationFrame(draw);
 }
 
-setInterval(draw, 100);
-
-// Joystick Control
-let joystick = document.getElementById('joystick');
-let container = document.getElementById('joystick-container');
-
-let dragging = false;
-
-joystick.addEventListener('touchstart', () => dragging = true);
-joystick.addEventListener('touchend', () => {
-  dragging = false;
-  joystick.style.top = '30px';
-  joystick.style.left = '30px';
-});
-
-joystick.addEventListener('touchmove', (e) => {
-  if (!dragging) return;
-  e.preventDefault();
-  let touch = e.touches[0];
-  let rect = container.getBoundingClientRect();
-  let x = touch.clientX - rect.left - 50;
-  let y = touch.clientY - rect.top - 50;
-  joystick.style.left = `${30 + x}px`;
-  joystick.style.top = `${30 + y}px`;
-
-  if (Math.abs(x) > Math.abs(y)) {
-    if (x > 10) move(1, 0); // right
-    else if (x < -10) move(-1, 0); // left
-  } else {
-    if (y > 10) move(0, 1); // down
-    else if (y < -10) move(0, -1); // up
-  }
-});
-
-function move(dx, dy) {
-  let nx = player.x + dx;
-  let ny = player.y + dy;
-  if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) return;
-  if (maze[ny][nx] === 1) return;
-  player.x = nx;
-  player.y = ny;
-  if (player.x === exit.x && player.y === exit.y) {
-    alert('🎉 You escaped!');
-    player = { x: 0, y: 9 };
+function mazeCountdown() {
+  countdown.style.display = "block";
+  countdown.textContent = "3";
+  setTimeout(() => countdown.textContent = "2", 1000);
+  setTimeout(() => countdown.textContent = "1", 2000);
+  setTimeout(() => {
+    countdown.style.display = "none";
     generateMaze();
-  }
+  }, 3000);
 }
+
+generateMaze();
+draw();
+setInterval(mazeCountdown, mazeChangeInterval);
