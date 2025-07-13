@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Escape the House - Demo</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Escape the House</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <h1>Escape the House</h1>
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-  <div id="joystick-container">
-    <div id="joystick"></div>
-  </div>
+  <div id="scoreboard">Score: 0</div>
+  <canvas id="gameCanvas"></canvas>
+  <button id="doorButton">OPEN</button>
+  <div id="countdown">3</div>
+  <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop autoplay></audio>
   <script src="game.js"></script>
 </body>
 </html>
