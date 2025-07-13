@@ -1,141 +1,117 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-canvas.width = 300;
-canvas.height = 300;
+let config = {
+  type: Phaser.AUTO,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  backgroundColor: '#1a1a1a',
+  physics: { default: 'arcade', arcade: { debug: false } },
+  scene: { preload, create, update }
+};
 
-let player = { x: 10, y: 10, r: 10, color: "red", score: 0 };
-let exit = { x: 270, y: 270, size: 20 };
-let doors = [];
-let walls = [];
-let countdown = document.getElementById("countdown");
-let doorButton = document.getElementById("doorButton");
-let scoreDisplay = document.getElementById("scoreboard");
+let game = new Phaser.Game(config);
 
-let keys = {};
-let lastDoorOpen = 0;
-let mazeChangeInterval = 10000; // 10 sec
+let player, cursors, doorBtn, score = 0;
+let doors = [], exit, mazeWalls = [];
+let countdownEl = document.getElementById('countdown');
+let scoreEl = document.getElementById('scoreboard');
 
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+function preload() {}
 
-// Random maze generator
-function generateMaze() {
-  walls = [];
-  doors = [];
+function create() {
+  this.cameras.main.setBackgroundColor('#222');
+  player = this.add.circle(100, 100, 15, 0xff0000);
+  this.physics.add.existing(player);
+  player.body.setCollideWorldBounds(true);
+
+  cursors = this.input.keyboard.createCursorKeys();
+  doorBtn = document.getElementById("doorBtn");
+
+  generateMaze(this);
+
+  this.time.addEvent({
+    delay: 10000,
+    callback: () => {
+      startCountdown(this);
+    },
+    loop: true
+  });
+}
+
+function update() {
+  player.body.setVelocity(0);
+  if (this.input.activePointer.isDown) {
+    let pointer = this.input.activePointer;
+    let dx = pointer.x - player.x;
+    let dy = pointer.y - player.y;
+    let speed = 150;
+    let angle = Math.atan2(dy, dx);
+    player.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+  }
+
+  doors.forEach((door, i) => {
+    if (Phaser.Math.Distance.Between(player.x, player.y, door.x, door.y) < 30) {
+      doorBtn.style.display = "block";
+      doorBtn.onclick = () => {
+        doorBtn.style.display = "none";
+        door.destroy();
+        doors.splice(i, 1);
+      };
+    }
+  });
+
+  if (exit && Phaser.Math.Distance.Between(player.x, player.y, exit.x, exit.y) < 25) {
+    score++;
+    scoreEl.innerText = `Score: ${score}`;
+    player.x = Phaser.Math.Between(50, 100);
+    player.y = Phaser.Math.Between(50, 100);
+  }
+}
+
+function generateMaze(scene) {
+  mazeWalls.forEach(w => w.destroy());
+  mazeWalls = [];
 
   for (let i = 0; i < 20; i++) {
-    let wall = {
-      x: Math.floor(Math.random() * 280),
-      y: Math.floor(Math.random() * 280),
-      w: 40,
-      h: 10
-    };
-    walls.push(wall);
+    let wall = scene.add.rectangle(
+      Phaser.Math.Between(50, scene.game.config.width - 50),
+      Phaser.Math.Between(50, scene.game.config.height - 50),
+      Phaser.Math.Between(80, 150),
+      10,
+      0x444444
+    );
+    scene.physics.add.existing(wall, true);
+    scene.physics.add.collider(player, wall);
+    mazeWalls.push(wall);
   }
 
-  for (let i = 0; i < 3; i++) {
-    doors.push({
-      x: Math.floor(Math.random() * 260),
-      y: Math.floor(Math.random() * 260),
-      w: 20,
-      h: 10,
-      open: false
-    });
-  }
-}
-
-function drawMaze() {
-  ctx.fillStyle = "#333";
-  for (let wall of walls) ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-
-  for (let door of doors) {
-    ctx.fillStyle = door.open ? "lime" : "orange";
-    ctx.fillRect(door.x, door.y, door.w, door.h);
+  doors.forEach(d => d.destroy());
+  doors = [];
+  for (let i = 0; i < 2; i++) {
+    let door = scene.add.rectangle(
+      Phaser.Math.Between(100, scene.game.config.width - 100),
+      Phaser.Math.Between(100, scene.game.config.height - 100),
+      30, 10, 0xff9900
+    );
+    scene.physics.add.existing(door, true);
+    scene.physics.add.collider(player, door);
+    doors.push(door);
   }
 
-  ctx.fillStyle = "yellow";
-  ctx.fillRect(exit.x, exit.y, exit.size, exit.size);
+  if (exit) exit.destroy();
+  exit = scene.add.rectangle(
+    scene.game.config.width - 40,
+    scene.game.config.height - 40,
+    20, 20, 0xffff00
+  );
+  scene.physics.add.existing(exit, true);
 }
 
-function drawPlayer() {
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-  ctx.fillStyle = player.color;
-  ctx.fill();
-  ctx.closePath();
-}
-
-function movePlayer() {
-  let dx = 0, dy = 0;
-  if (keys["ArrowUp"]) dy = -2;
-  if (keys["ArrowDown"]) dy = 2;
-  if (keys["ArrowLeft"]) dx = -2;
-  if (keys["ArrowRight"]) dx = 2;
-
-  let newX = player.x + dx;
-  let newY = player.y + dy;
-
-  if (!checkCollision(newX, newY)) {
-    player.x = newX;
-    player.y = newY;
-  }
-
-  for (let door of doors) {
-    if (isTouching(player, door)) {
-      doorButton.style.display = "block";
-      doorButton.onclick = () => {
-        door.open = true;
-        doorButton.style.display = "none";
-      };
-      return;
-    }
-  }
-
-  doorButton.style.display = "none";
-}
-
-function checkCollision(x, y) {
-  for (let wall of walls) {
-    if (x > wall.x && x < wall.x + wall.w &&
-        y > wall.y && y < wall.y + wall.h) return true;
-  }
-  return false;
-}
-
-function isTouching(c, rect) {
-  return (c.x > rect.x && c.x < rect.x + rect.w &&
-          c.y > rect.y && c.y < rect.y + rect.h);
-}
-
-function checkExit() {
-  if (isTouching(player, exit)) {
-    player.score += 1;
-    scoreDisplay.textContent = `Score: ${player.score}`;
-    player.x = 10 + Math.random() * 20;
-    player.y = 10 + Math.random() * 20;
-  }
-}
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawMaze();
-  drawPlayer();
-  movePlayer();
-  checkExit();
-  requestAnimationFrame(draw);
-}
-
-function mazeCountdown() {
-  countdown.style.display = "block";
-  countdown.textContent = "3";
-  setTimeout(() => countdown.textContent = "2", 1000);
-  setTimeout(() => countdown.textContent = "1", 2000);
+function startCountdown(scene) {
+  countdownEl.innerText = "3";
+  countdownEl.style.display = "block";
+  setTimeout(() => countdownEl.innerText = "2", 1000);
+  setTimeout(() => countdownEl.innerText = "1", 2000);
   setTimeout(() => {
-    countdown.style.display = "none";
-    generateMaze();
+    countdownEl.style.display = "none";
+    generateMaze(scene);
   }, 3000);
-}
-
-generateMaze();
-draw();
-setInterval(mazeCountdown, mazeChangeInterval);
+    }
