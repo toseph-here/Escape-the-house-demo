@@ -7,12 +7,12 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Escape the House</h1>
-  <div id="scoreboard">Score: 0</div>
-  <canvas id="gameCanvas"></canvas>
-  <button id="doorButton">OPEN</button>
+  <canvas id="game"></canvas>
+  <button id="doorBtn">OPEN</button>
   <div id="countdown">3</div>
-  <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop autoplay></audio>
+  <div id="scoreboard">Score: 0</div>
+  <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" autoplay loop></audio>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
