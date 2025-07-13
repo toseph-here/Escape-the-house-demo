@@ -1,4 +1,3 @@
-// Maze dimensions
 const cols = 15;
 const rows = 15;
 const tileSize = 25;
@@ -14,14 +13,17 @@ window.onload = () => {
 
   generateEmptyMaze();
   carveMaze(1, 1);
-  drawMaze();
+  drawEverything();
+
+  // Door check every 200ms
+  setInterval(checkDoorProximity, 200);
 };
 
 function generateEmptyMaze() {
   for (let y = 0; y < rows; y++) {
     maze[y] = [];
     for (let x = 0; x < cols; x++) {
-      maze[y][x] = 1; // 1 = wall, 0 = path
+      maze[y][x] = 1;
     }
   }
 }
@@ -38,7 +40,7 @@ function carveMaze(x, y) {
     const ny = y + dy;
 
     if (ny >= 0 && ny < rows && nx >= 0 && nx < cols && maze[ny][nx] === 1) {
-      maze[y + dy / 2][x + dx / 2] = 0; // remove wall between
+      maze[y + dy / 2][x + dx / 2] = 0;
       carveMaze(nx, ny);
     }
   }
@@ -48,16 +50,16 @@ function drawMaze() {
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       if (maze[y][x] === 1) {
-        ctx.fillStyle = '#4a4a4a'; // wall - dark grey
+        ctx.fillStyle = '#4a4a4a';
       } else {
-        ctx.fillStyle = '#cce7ff'; // floor - soft blue
+        ctx.fillStyle = '#cce7ff';
       }
       ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
     }
   }
 }
 
-// Helper: shuffle directions
+// Helper
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
