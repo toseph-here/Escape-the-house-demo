@@ -1,29 +1,24 @@
 body {
   margin: 0;
-  padding: 0;
-  background: #111;
-  color: white;
-  text-align: center;
-  font-family: sans-serif;
+  overflow: hidden;
+  background: black;
 }
 
 canvas {
   display: block;
-  margin: 10px auto;
-  background: #000;
-  border: 2px solid white;
 }
 
-#doorButton {
+#doorBtn {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 15px;
+  right: 15px;
   padding: 10px 20px;
-  background: green;
-  color: white;
   font-weight: bold;
+  font-size: 18px;
+  background-color: green;
+  color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   display: none;
 }
 
@@ -32,12 +27,15 @@ canvas {
   top: 50%;
   left: 50%;
   font-size: 64px;
-  transform: translate(-50%, -50%);
   color: red;
+  transform: translate(-50%, -50%);
   display: none;
 }
 
 #scoreboard {
-  margin: 10px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
   font-size: 20px;
 }
