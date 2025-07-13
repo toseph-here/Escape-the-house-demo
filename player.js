@@ -15,7 +15,7 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowLeft') newX--;
   else if (e.key === 'ArrowRight') newX++;
 
-  if (maze[newY][newX] === 0) {
+  if (maze[newY] && maze[newY][newX] === 0) {
     player.x = newX;
     player.y = newY;
     drawEverything();
@@ -35,4 +35,5 @@ function drawPlayer() {
 function drawEverything() {
   drawMaze();
   drawPlayer();
+  drawDoor();
 }
